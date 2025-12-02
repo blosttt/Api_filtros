@@ -9,5 +9,6 @@ Esta API implementa las mejores prácticas de seguridad OWASP Top 10.
 1. **Clonar repositorio**
 2. **Configurar variables de entorno:**
    ```bash
-   cp .env.example .env
+   cp .env
+
    # Editar .env con valores seguros
