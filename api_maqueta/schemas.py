@@ -1,106 +1,123 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, validator, field_validator
 from typing import Optional, List
-from datetime import date
+from datetime import datetime
 from decimal import Decimal
 
-# ==============================
-# SCHEMAS PARA CATEGORIAS
-# ==============================
+# Schema base para categorías
 class CategoriaBase(BaseModel):
-    nombre_categoria: str
+    nombre: str
+    descripcion: Optional[str] = None
+    tipo: str = "general"
 
 class CategoriaCreate(CategoriaBase):
     pass
 
 class CategoriaResponse(CategoriaBase):
-    id_categoria: int
+    id: int
+    created_at: datetime
+    activo: int
 
     class Config:
         from_attributes = True
 
-# ==============================
-# SCHEMAS PARA DISTRIBUIDORES
-# ==============================
+# Schema base para distribuidores
 class DistribuidorBase(BaseModel):
     nombre: str
-    rut: str
+    contacto: Optional[str] = None
     telefono: Optional[str] = None
     email: Optional[str] = None
-    direccion: Optional[str] = None
-    ciudad: Optional[str] = None
 
 class DistribuidorCreate(DistribuidorBase):
     pass
 
 class DistribuidorResponse(DistribuidorBase):
-    id_distribuidor: int
+    id: int
+    created_at: datetime
+    activo: int
 
     class Config:
         from_attributes = True
 
-# ==============================
-# SCHEMAS PARA FILTROS (PRODUCTOS)
-# ==============================
-class FiltroBase(BaseModel):
-    codigo_producto: str
-    nombre_filtro: str
-    id_categoria: int
-    marca: str
+# Schema base para productos
+class ProductoBase(BaseModel):
+    codigo_barras: str
+    nombre: str
     descripcion: Optional[str] = None
-    precio_compra: Decimal
-    margen_ganancia: Decimal = 30.0
-    stock: int = 0
-    id_distribuidor: Optional[int] = None
+    marca: str
+    categoria_id: int
+    distribuidor_id: Optional[int] = None
+    cantidad: int = 0
+    precio_neto: float
+    porcentaje_ganancia: float = 30.0
+    iva: float = 19.0
+    
+    # Campos para filtros de vehículos
+    tipo_vehiculo: Optional[str] = None
+    tipo_aceite: Optional[str] = None
+    tipo_combustible: Optional[str] = None
+    tipo_filtro: Optional[str] = None
 
-    @field_validator('precio_compra')
+    @field_validator('precio_neto')
     @classmethod
     def precio_must_be_positive(cls, v):
         if v <= 0:
-            raise ValueError('El precio de compra debe ser mayor a 0')
+            raise ValueError('El precio neto debe ser mayor a 0')
         return v
 
-    @field_validator('margen_ganancia')
+    @field_validator('porcentaje_ganancia')
     @classmethod
     def ganancia_must_be_reasonable(cls, v):
         if v < 0 or v > 1000:
-            raise ValueError('El margen de ganancia debe ser entre 0 y 1000')
+            raise ValueError('El porcentaje de ganancia debe ser entre 0 y 1000')
         return v
 
-    @field_validator('stock')
+    @field_validator('cantidad')
     @classmethod
-    def stock_must_be_non_negative(cls, v):
+    def cantidad_must_be_non_negative(cls, v):
         if v < 0:
-            raise ValueError('El stock no puede ser negativo')
+            raise ValueError('La cantidad no puede ser negativa')
         return v
 
-class FiltroCreate(FiltroBase):
+class ProductoCreate(ProductoBase):
     pass
 
-class FiltroUpdate(BaseModel):
-    codigo_producto: Optional[str] = None
-    nombre_filtro: Optional[str] = None
-    id_categoria: Optional[int] = None
-    marca: Optional[str] = None
+class ProductoUpdate(BaseModel):
+    codigo_barras: Optional[str] = None
+    nombre: Optional[str] = None
     descripcion: Optional[str] = None
-    precio_compra: Optional[Decimal] = None
-    margen_ganancia: Optional[Decimal] = None
-    stock: Optional[int] = None
-    id_distribuidor: Optional[int] = None
+    marca: Optional[str] = None
+    categoria_id: Optional[int] = None
+    distribuidor_id: Optional[int] = None
+    cantidad: Optional[int] = None
+    precio_neto: Optional[float] = None
+    porcentaje_ganancia: Optional[float] = None
+    iva: Optional[float] = None
+    tipo_vehiculo: Optional[str] = None
+    tipo_aceite: Optional[str] = None
+    tipo_combustible: Optional[str] = None
+    tipo_filtro: Optional[str] = None
 
-class FiltroResponse(FiltroBase):
-    id_filtro: int
-    precio_neto: Decimal
-    iva: Decimal
-    precio_venta: Decimal
-    fecha_actualizacion: date
+class ProductoResponse(ProductoBase):
+    id: int
+    precio_venta: float
+    created_at: datetime
+    updated_at: datetime
+    activo: int
     categoria: Optional[CategoriaResponse] = None
     distribuidor: Optional[DistribuidorResponse] = None
 
     class Config:
         from_attributes = True
 
-class FiltroListResponse(BaseModel):
-    items: List[FiltroResponse]
+class ProductoListResponse(BaseModel):
+    items: List[ProductoResponse]
     total: int
     pagina: int
     tamaño: int
+
+# Schemas para filtros
+class FiltroVehiculo(BaseModel):
+    tipo_vehiculo: Optional[str] = None
+    tipo_aceite: Optional[str] = None
+    tipo_combustible: Optional[str] = None
+    tipo_filtro: Optional[str] = None
